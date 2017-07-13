@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Minesweeper</title>
+		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+		<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+		<style>
+			#new{
+				border:1px solid gray;
+				border-radius:3px;
+				width:200px;
+				height:50px;
+				font-size:12px;
+				text-align:center;
+				background-color:#CCC;
+			}
+			#new:hover{
+				background-color:#999;
+				cursor:pointer;
+			}
+			#timer{
+				width:200px;
+				height:50px;
+				font-size:12px;
+				text-align:center;
+			}
+			.panel-default > .panel-heading-custom {
+    		background: #0ebfe9; color: #fff;
+			}
+			.panel-default2 > .panel-heading-custom {
+    		background: #b22b2b; color: #fff;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container-fluid">
+			<h1><small>CSCI 4140: Course Project</small><br />Minesweeper Battle</h1>
+			<script>
+				var s = {
+					rows: 16,
+					cols: 16,
+					width: 25,
+					height: 25
+				};
+
+				var c;
+				var bombs = [];
+				var clickedBs = [];
+
+				window.onload = function(){
+					var canvas = document.getElementById('gCanvas');
+					c = canvas.getContext('2d');
+
+					timer();
+					init();
+				};
+
+				var mX;
+				var mY;
+				var clickedX;
+				var clickedY;
+
+				window.onclick = function(e){
+					clickFunction(e);
+				}
+
+				function clickFunction(e){
+					mX = e.pageX-30;
+					mY = e.pageY-165;
+
+					if(Math.floor(mX/s.width) < s.cols && Math.floor(mY/s.height) < s.rows){
+						clickedX = Math.floor(mX/s.width);
+						clickedY = Math.floor(mY/s.height);
+						console.log(clickedX + "," + clickedY);
+					}
+					else{
+						clickedX = undefined;
+						clickedY = undefined;
+					}
+
+
+
+					if(useBomb == false){
+
+						var clickedBomb = false;
+
+						for(var i=0; i<51; i++){
+							if(clickedX == bombs[i][0] && clickedY == bombs[i][1]){
+								clickedBomb = true;
+
+								var alreadyClicked = false;
+								for(n in clickedBs){
+									if(clickedBs[n][0] == clickedX && clickedBs[n][1] == clickedY){
+										alreadyClicked = true;
+									}
+								}
+								if(alreadyClicked == false){
+									clickBomb(clickedX, clickedY);
+								}
+
+							}
+						}
+
+						if(clickedBomb == false){
+
+							var alreadyClicked = false;
+							for(n in clickedBs){
+								if(clickedBs[n][0] == clickedX && clickedBs[n][1] == clickedY){
+									alreadyClicked = true;
+								}
+							}
+							if(alreadyClicked == false){
+								if(player == 1){
+									player = 2;
+								}
+								else{
+									player = 1;
+								}
+								// bubu.play();
+								socket.emit('bubububu');
+								clickPass(clickedX, clickedY);
+							}
+
+						}
+					}
+					else{
+						useBombItem(clickedX, clickedY);
+					}
+					// alert(win);
+					socket.emit( 'clickEvent', clickedBs, player, myNum, win);
+
+				}
+
+				var box;
+				var num1;
+				var num2;
+				var num3;
+				var num4;
+				var num5;
+				var zero;
+				var bf;
+				var rf;
+				var player = 1;
+				var win = 0;
+				var useBomb = false;
+				var bang;
+				var bubu;
+
+				function init(){
+					box = new Image();
+					num1 = new Image();
+					num2 = new Image();
+					num3 = new Image();
+					num4 = new Image();
+					num5 = new Image();
+					zero = new Image();
+					bf = new Image();
+					rf = new Image();
+					bang = new Audio("sounds/bang.mp3");
+					bubu = new Audio("sounds/bubu.mp3");
+					box.onload = function(){
+						drawCanvas();
+					};
+					box.src = "images/box.png";
+					num1.src = "images/1.png";
+					num2.src = "images/2.png";
+					num3.src = "images/3.png";
+					num4.src = "images/4.png";
+					num5.src = "images/5.png";
+					zero.src = "images/zero.png";
+					bf.src = "images/bf.png";
+					rf.src = "images/rf.png";
+
+					for(var i=0; i<51; i++){
+						var nextBomb = false;
+						var bombX = Math.floor(Math.random()*16);
+						var bombY = Math.floor(Math.random()*16);
+						while(nextBomb == false){
+							nextBomb = true;
+
+							for(var j=0; j<bombs.length; j++){
+								if(bombX == bombs[j][0] && bombY == bombs[j][1]){
+									nextBomb = false;
+									bombX = Math.floor(Math.random()*16);
+									bombY = Math.floor(Math.random()*16);
+								}
+							}
+						}
+						bombs[i] = [
+							bombX,
+							bombY
+						];
+					}
+					drawCanvas();
+
+					console.log(bombs);
+
+					// check gen jor same bomb position
+					// for(var i=0; i<50; i++){
+					// 	for(var j=i+1; j<51; j++){
+					// 		if(bombs[i][0] == bombs[j][0] && bombs[i][1] == bombs[j][1]){
+					// 			console.log(i + "," + j);
+					// 		}
+					// 	}
+					// }
+
+				}
+
+				var time = 0;
+				function timer(){
+					setTimeout(function(){
+						var timerDiv = document.getElementById("timer")
+						time++;
+						timerDiv.innerHTML = time + "s";
+						timer();
+					}, 1000)
+				}
+
+				function drawCanvas(){
+
+					c.clearRect(0,0,400,400);
+
+					var numOfBF = 0;
+					var numOfRF = 0;
+
+					for(var q=0; q<clickedBs.length; q++){
+						if(clickedBs[q][3] == 1){
+							numOfBF++;
+						}
+						else if(clickedBs[q][3] == 2){
+							numOfRF++;
+						}
+					}
+
+					document.getElementById("bFlag").innerHTML = numOfBF;
+					document.getElementById("rFlag").innerHTML = numOfRF;
+
+					if(myNum == 1){
+						document.getElementById("p1").innerHTML = "You";
+					}else if(myNum == 2){
+						document.getElementById("p2").innerHTML = "You";
+					}
+
+					if(player == myNum && player == 1){
+						document.getElementById("d1").innerHTML = "This is your turn";
+						document.getElementById("d2").innerHTML = "";
+					}else if(player == myNum && player == 2){
+						document.getElementById("d2").innerHTML = "This is your turn";
+						document.getElementById("d1").innerHTML = "";
+					}else if(player != myNum && player == 2){
+						document.getElementById("d1").innerHTML = "Please Wait";
+						document.getElementById("d2").innerHTML = "";
+					}else if(player != myNum && player == 1){
+						document.getElementById("d2").innerHTML = "Please Wait";
+						document.getElementById("d1").innerHTML = "";
+					}
+
+					if(myNum == 1){
+						document.getElementById("bb2").setAttribute("class", "btn btn-primary disabled");
+					}else if(myNum == 2){
+						document.getElementById("bb1").setAttribute("class", "btn btn-primary disabled");
+					}
+
+					for(var i=0; i<s.rows; i++){
+						for(var n=0; n<s.cols; n++){
+							var x = n*s.width;
+							var y = i*s.height;
+
+							var beenClicked = [0, false];
+
+
+
+
+
+							for(var k=0; k<clickedBs.length; k++){
+								if(clickedBs[k][0] == n && clickedBs[k][1] == i){
+									beenClicked = [k, true];
+								}
+							}
+
+
+							if(beenClicked[1] == true){
+
+								if(clickedBs[(beenClicked[0])][3] == 0){
+
+									if(clickedBs[(beenClicked[0])][2] == 1){
+										c.drawImage(num1, x, y);
+									}
+									else if(clickedBs[(beenClicked[0])][2] == 2){
+										c.drawImage(num2, x, y);
+									}
+									else if(clickedBs[(beenClicked[0])][2] == 3){
+										c.drawImage(num3, x, y);
+									}
+									else if(clickedBs[(beenClicked[0])][2] == 4){
+										c.drawImage(num4, x, y);
+									}
+									else if(clickedBs[(beenClicked[0])][2] == 5){
+										c.drawImage(num5, x, y);
+									}
+									else{
+										c.drawImage(zero, x, y);
+									}
+								}
+								else if(clickedBs[(beenClicked[0])][3] == 1){
+									c.drawImage(bf, x, y);
+								}
+								else if(clickedBs[(beenClicked[0])][3] == 2){
+									c.drawImage(rf, x, y);
+								}
+							}
+							else{
+								c.drawImage(box, x, y);
+							}
+						}
+					}
+
+					if(numOfBF == 26){
+						// alert("Blue Player Win!!")
+						win = 1;
+					}else if(numOfRF == 26){
+						// alert("Red Player Win!!")
+						win = 2;
+					}
+				};
+
+				function clickPass(x, y){
+
+					var boxesToCheck = [
+						[-1,-1],
+						[0,-1],
+						[1,-1],
+						[1,0],
+						[1,1],
+						[0,1],
+						[-1,1],
+						[-1,0]
+					];
+
+					var numOfBombsSurrounding = 0;
+
+					for(i in boxesToCheck){
+						for(var n=0; n<51; n++){
+							if(checkBomb(n, x + boxesToCheck[i][0], y + boxesToCheck[i][1]) == true){
+								numOfBombsSurrounding++;
+							}
+						}
+					}
+
+					clickedBs[(clickedBs.length)] = [x, y, numOfBombsSurrounding, 0];
+
+					if(numOfBombsSurrounding == 0){
+						for(i in boxesToCheck){
+							if(x + boxesToCheck[i][0] >= 0 && x + boxesToCheck[i][0] <= 16 && y + boxesToCheck[i][1] >= 0 && y+boxesToCheck[i][1] <= 16){
+								var x1 = x + boxesToCheck[i][0];
+								var y1 = y + boxesToCheck[i][1];
+
+								var alreadyClicked = false;
+								for(n in clickedBs){
+									if(clickedBs[n][0] == x1 && clickedBs[n][1] == y1){
+										alreadyClicked = true;
+									}
+								}
+								if(alreadyClicked == false){
+									clickPass(x1,y1);
+								}
+							}
+						}
+					}
+
+					drawCanvas();
+
+					console.log(numOfBombsSurrounding);
+				}
+
+				function checkBomb(i,x,y){
+					if(bombs[i][0] == x && bombs[i][1] == y){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+
+				function clickBomb(x,y){
+					// alert("clicked the bomb");
+					// bang.play();
+					socket.emit('bangbang');
+					clickedBs[(clickedBs.length)] = [x, y, undefined, player];
+					drawCanvas();
+				}
+
+				function useBombItem(x,y){
+					// alert("useBombItem");
+
+					if((x >= 0 || x < 16) && (y >= 0 || y < 16)){
+						// bubu.play();
+						socket.emit('bubububu');
+						var countF = 0;
+						var boxesToCheck = [
+							[-1,-1],
+							[0,-1],
+							[1,-1],
+							[1,0],
+							[1,1],
+							[0,1],
+							[-1,1],
+							[-1,0],
+							[0,0]
+						];
+
+						for(w in boxesToCheck){
+
+							var clickedBomb = false;
+							for(var i=0; i<51; i++){
+								if(x + boxesToCheck[w][0] == bombs[i][0] && y + boxesToCheck[w][1] == bombs[i][1]){
+									clickedBomb = true;
+
+									var alreadyClicked = false;
+									for(n in clickedBs){
+										if(clickedBs[n][0] == x + boxesToCheck[w][0] && clickedBs[n][1] == y + boxesToCheck[w][1]){
+											alreadyClicked = true;
+										}
+									}
+									if(alreadyClicked == false){
+										countF++;
+										clickBomb(x + boxesToCheck[w][0], y + boxesToCheck[w][1]);
+									}
+
+								}
+							}
+
+							if(clickedBomb == false){
+
+								var alreadyClicked = false;
+								for(n in clickedBs){
+									if(clickedBs[n][0] == x + boxesToCheck[w][0] && clickedBs[n][1] == y + boxesToCheck[w][1]){
+										alreadyClicked = true;
+									}
+								}
+								if(alreadyClicked == false){
+
+									clickPass(x + boxesToCheck[w][0], y + boxesToCheck[w][1]);
+								}
+
+							}
+
+						}
+						document.getElementById("bb1").setAttribute("class", "btn btn-primary disabled");
+						document.getElementById("bb2").setAttribute("class", "btn btn-primary disabled");
+						useBomb = false;
+						if(countF == 0){
+							if(player = 1){
+								player = 2;
+							}
+							else{
+								player = 1;
+							}
+						}
+					}
+				}
+
+
+				function newGame(){
+					player = 1;
+					win = 0;
+					clickedBs = [];
+					useBomb = false;
+					bombs = [];
+					time = 0;
+					init();
+					socket.emit('newGame', bombs);
+
+				}
+
+
+				function clickBomb1(){
+					if(document.getElementById("b1").style.color != "red"){
+						document.getElementById("b1").style.color = "red";
+						useBomb = true;
+					}else{
+						document.getElementById("b1").removeAttribute("style");
+						useBomb = false
+					}
+				}
+				function clickBomb2(){
+					if(document.getElementById("b2").style.color != "red"){
+						document.getElementById("b2").style.color = "red";
+						useBomb = true
+					}else{
+						document.getElementById("b2").removeAttribute("style");
+						useBomb = false
+					}
+				}
+
+			</script>
+			<div class="row">
+
+				<div class="col-sm-9 col-md-9">
+					<div class="panel panel-default">
+						<div class="panel-heading">Game Convas</div>
+						<div class="panel-body" id="gameCanvas">
+							<canvas id="gCanvas" width="400" height="400"></canvas>
+						</div>
+						<!-- <div id="controls"> -->
+							<!-- <div id="timer">
+								0s
+							</div> -->
+							<!-- <div id="new" onclick="newGame()">
+								New game
+							</div> -->
+						<!-- </div> -->
+					</div>
+				</div>
+				<div class="col-sm-3 col-md-3">
+					<table>
+						<tr>
+							<div class="panel panel-default">
+
+								<div style="height: 250px; font-size: 25px;"  class="panel-heading panel-heading-custom" >
+									<i id="p1">Blue</i><br>
+									<a id="bb1" onclick="clickBomb1()" class="btn btn-block btn-default">
+										<i id="b1" class="fa fa-bomb fa-4x" aria-hidden="true"></i>
+										<i id="bFlag">0</i>
+									</a>
+									<br><i id="d1"></i>
+								</div>
+							</div>
+						</tr>
+						<tr>
+							<div class="panel panel-default2">
+								<div style="height: 250px; font-size: 25px" class="panel-heading panel-heading-custom">
+									<i id="p2">Red</i><br>
+									<a id="bb2" onclick="clickBomb2()" class="btn btn-block btn-default">
+										<i id="b2" class="fa fa-bomb fa-4x" aria-hidden="true"></i>
+										<i id="rFlag">0</i>
+									</a>
+									<br><i id="d2"></i>
+								</div>
+							</div>
+						</tr>
+					</table>
+				</div>
+
+			</div>
+		</div>
+		<script src="//code.jquery.com/jquery-2.2.2.min.js"></script>
+		<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+ 		<script>
+			if( !Array.prototype.last){
+				Array.prototype.last = (function(){
+					return this[this.length - 1];
+				});
+			}
+			var id = window.location.href.split('/').last();
+			console.log(id);
+			var socket = io();
+			var myNum;
+			socket.emit( 'register', id);
+
+			socket.on('getNum', function(num){
+				if(!myNum){
+					myNum = num;
+					// document.getElementById("p1").innerHTML = "You";
+
+				}
+				if(myNum == 2){
+					window.onclick = function(){return false};
+					// document.getElementById("p2").innerHTML = "You";
+
+				}
+				// if(myNum == 1){
+				// 	document.getElementById("p1").innerHTML = "You";
+				// }else if(myNum == 2){
+				// 	document.getElementById("p2").innerHTML = "You";
+				// }
+				socket.emit('synBombs', bombs);
+			})
+
+			socket.on('update', function(data, upplayer, num, upwin){
+				// alert("upwin = " + upwin);
+					clickedBs = data;
+					player = upplayer;
+					drawCanvas();
+					if( player == myNum){
+						window.onclick = function(e){ clickFunction(e)};
+					}else{
+						window.onclick = function(){ return false};
+					}
+
+				if( upwin != 0){
+					if( upwin == myNum){
+						alert("you win");
+						newGame();
+
+					}else {
+						alert("you fail");
+					}
+
+
+				}
+
+
+			})
+
+			socket.on('synBombs', function(upbombs){
+				bombs = upbombs;
+				drawCanvas();
+				console.log("synbomb");
+				console.log(bombs);
+			})
+
+			socket.on('newGame', function(upbombs){
+				bombs = upbombs;
+				player = 1;
+				win = 0;
+				useBomb = false;
+				clickedBs = [];
+				if(myNum == 1){
+					document.getElementById("bb1").setAttribute("class", "btn btn-block btn-default");
+					document.getElementById("b1").removeAttribute("style");
+				}else{
+					document.getElementById("bb2").setAttribute("class", "btn btn-block btn-default");
+					document.getElementById("b2").removeAttribute("style");
+				}
+				// if( player == myNum){
+				// 	window.onclick = function(e){clickFunction(e)};
+				// }else{
+				// 	window.onclick = function(e){return false};
+				// }
+				drawCanvas();
+			})
+
+			socket.on('bangbang', function(){
+				bang.play();
+			})
+
+			socket.on('bubububu', function(){
+				bubu.play();
+			})
+
+
+
+ 		</script>
+	</body>
+</html>
